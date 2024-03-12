@@ -1,0 +1,1 @@
+export const BASE_API_ENDPOINT = `https://bookrental-7yd6.onrender.com`
