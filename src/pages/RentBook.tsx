@@ -128,7 +128,7 @@ const RentBook: React.FC = () => {
   };
 
   const onUploadFinish = (e: any) => {
-    let payload = {
+    let payload:any = {
       file: e.file.file,
     };
     uploadTransaction(payload, {
@@ -171,7 +171,7 @@ const RentBook: React.FC = () => {
     setOpenModal(false);
   };
 
-  const showDrawer = (editMode: boolean, rentData) => {
+  const showDrawer = (editMode: boolean, rentData:any) => {
     setEditMode(editMode);
     setSelectedRentData(rentData);
     setOpen(true);

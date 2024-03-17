@@ -1,10 +1,10 @@
 import { Form, Input, Button, message } from "antd";
 import { useEffect } from "react";
-import { useAddCategory, useEditCategory, useUploadCategory } from "../api/category/queries";
+import { useAddCategory, useEditCategory, } from "../api/category/queries";
 
 interface CategoryFormProps {
   editMode: boolean;
-  initialData: Object | null;
+  initialData: any | null;
   onSuccess: () => void;
   onUpdateCategory: (data:any) => void;
 }
@@ -21,7 +21,6 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
 
   const { mutate: addCategory, isLoading: isAddingCategory } = useAddCategory();
   const { mutate: editCategory, isLoading: isEditingCategory } = useEditCategory();
-  const { mutate: uploadCategory, isLoading: isUploadingCategory } = useUploadCategory();
 
   const onFinish = (values: any) => {
     let payload: any = {
@@ -59,7 +58,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     console.log("Received values:", values);
   };
 
-  const onFinishFailed = (errorInfo) => {
+  const onFinishFailed = (errorInfo:any) => {
     console.log("Failed:", errorInfo);
     message.error("Please check the form for errors.");
   };

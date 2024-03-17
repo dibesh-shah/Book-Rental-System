@@ -167,7 +167,7 @@ const CategorySetup: React.FC = () => {
     setOpenModal(false);
   };
 
-  const showDrawer = (editMode: boolean, categoryData) => {
+  const showDrawer = (editMode: boolean, categoryData:any) => {
     setEditMode(editMode);
     setSelectedCategoryData(categoryData);
     setOpen(true);

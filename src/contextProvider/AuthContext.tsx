@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         console.error("Login failed:", responseData.message);
       }
       console.log(responseData);
-    } catch (error) {
+    } catch (error:any) {
       console.error("Login failed", error);
       message.error(`Failed : ${error.response.data.data.errorMessage}`);
     }

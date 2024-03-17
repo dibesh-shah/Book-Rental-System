@@ -1,18 +1,17 @@
 import { Form, Input, Button, message, Select, InputNumber } from "antd";
-import { useEffect, useState } from "react";
-import dayjs from "dayjs";
+import { useEffect } from "react";
+// import dayjs from "dayjs";
 
 import {
   useAddTransaction,
   useUpdateTransaction,
-  useUploadTransaction,
 } from "../api/transaction/queries";
 import { useFetchMember } from "../api/member/queries";
 import { useFetchBook } from "../api/book/queries";
 
 interface RentFormProps {
   editMode: boolean;
-  initialData: Object | null;
+  initialData: any | null;
   onSuccess: () => void;
   onUpdateTransaction: (data: any) => void;
 }
@@ -31,8 +30,6 @@ const RentForm: React.FC<RentFormProps> = ({
     useAddTransaction();
   const { mutate: editTransaction, isLoading: isEditingTransaction } =
     useUpdateTransaction();
-  const { mutate: uploadTransaction, isLoading: isUploadingTransaction } =
-    useUploadTransaction();
   const { data: members } = useFetchMember();
   const { data: books } = useFetchBook();
 
@@ -55,7 +52,6 @@ const RentForm: React.FC<RentFormProps> = ({
     };
 
     if (initialData) {
-      // payload = { ...payload, id: initialData.id };
       const { bookId, Fk_member_id, ...rest } = payload;
       payload = { ...rest, id: initialData.id };
 
@@ -86,7 +82,7 @@ const RentForm: React.FC<RentFormProps> = ({
     console.log("Received values:", values);
   };
 
-  const onFinishFailed = (errorInfo) => {
+  const onFinishFailed = (errorInfo:any) => {
     console.log("Failed:", errorInfo);
     message.error("Please check the form for errors.");
   };
@@ -96,7 +92,6 @@ const RentForm: React.FC<RentFormProps> = ({
   };
 
   useEffect(() => {
-    // Use setFieldsValue to set initial values after the form is mounted
     if (initialData) {
       form.setFieldsValue({
         id: initialData.id,
@@ -147,7 +142,7 @@ const RentForm: React.FC<RentFormProps> = ({
         rules={[{ required: true, message: "Please select a book!" }]}
       >
         <Select placeholder="Select a book" disabled={editMode ? true : false}>
-          {books?.map((book) => (
+          {books?.map((book:any) => (
             <Option key={book.id} value={book.id}>
               {book.name}
             </Option>
@@ -165,7 +160,7 @@ const RentForm: React.FC<RentFormProps> = ({
           placeholder="Select a member"
           disabled={editMode ? true : false}
         >
-          {members?.map((member) => (
+          {members?.map((member:any) => (
             <Option key={member.memberid} value={member.memberid}>
               {member.name}
             </Option>

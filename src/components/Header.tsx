@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contextProvider/AuthContext";
 
 const Head: React.FC = () => {
-  const { loggedIn, logout } = useAuth();
+  const {  logout } = useAuth();
   const userName = localStorage.getItem("userName");
   const currentUser = userName?.split('@')[0];
 

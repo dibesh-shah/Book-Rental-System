@@ -10,14 +10,12 @@ import {
   Select,
 } from "antd";
 import type { TableProps } from "antd";
-// import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
 import {
   useAddUser,
   useDeactivateUser,
   useFetchUser,
   useReactivateUser,
-  useResetUser,
 } from "../api/user/queries";
 
 interface UserDataType {
@@ -60,7 +58,7 @@ const ManageUser: React.FC = () => {
     if (status == "activate") {
       reactivate(deleteId, {
         onSuccess: () => {
-          setDeleteId(null);
+          setDeleteId(0);
           message.success(`Activated User  Successfully`);
           setOpenModal(false);
           userRefetch();
@@ -69,7 +67,7 @@ const ManageUser: React.FC = () => {
     } else {
       deactivate(deleteId, {
         onSuccess: () => {
-          setDeleteId(null);
+          setDeleteId(0);
           message.success(`Deactivated User  Successfully`);
           setOpenModal(false);
           userRefetch();
@@ -93,7 +91,7 @@ const ManageUser: React.FC = () => {
         setIsModalOpen(false);
         userRefetch();
       },
-      onError: (error) => {
+      onError: (error:any) => {
         message.error(error.message);
       },
     });

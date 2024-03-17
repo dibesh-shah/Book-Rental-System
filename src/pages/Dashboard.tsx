@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Content } from "antd/es/layout/layout";
 
-import { Link, Navigate, Route, Routes } from "react-router-dom";
-import { Breadcrumb, Card, Col, Layout, Menu, Row, Spin, theme } from "antd";
+import {  Navigate, Route, Routes } from "react-router-dom";
+import { Breadcrumb,  Layout, Spin, theme } from "antd";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import AuthorSetup from "./AuthorSetup";
@@ -10,7 +10,6 @@ import CategorySetup from "./CategorySetup";
 import MemberSetup from "./MemberSetup";
 import BookSetup from "./BookSetup";
 import RentBook from "./RentBook";
-import ReturnBook from "./ReturnBook";
 import { useAuth } from "../contextProvider/AuthContext";
 import About from "./About";
 import ManageUser from "./ManageUser";
@@ -22,8 +21,7 @@ import { useFetchMember } from "../api/member/queries";
 import { useFetchBook } from "../api/book/queries";
 
 const Dashboard: React.FC = () => {
-  const { loggedIn, logout } = useAuth();
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const { loggedIn } = useAuth();
   const [currentRole, setCurrentRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,17 +45,17 @@ const Dashboard: React.FC = () => {
     if (userToken) {
       const userInfo = getUserInfoFromToken(userToken);
       if (userInfo) {
-        const { username, exp, role } = userInfo;
+        const { username, role } = userInfo;
         setCurrentRole(role);
-        setCurrentUser(username);
+        // setCurrentUser(username);
         localStorage.setItem("userRole", role);
         localStorage.setItem("userName", username);
       } else {
-        setCurrentUser(null);
+        // setCurrentUser(null);
         setCurrentRole(null);
       }
     } else {
-      setCurrentUser(null);
+      // setCurrentUser(null);
       setCurrentRole(null);
     }
   }, []);
@@ -76,70 +74,57 @@ const Dashboard: React.FC = () => {
   const memberCount = members?.length || 0;
   const categoryCount = category?.length || 0;
 
-  const CustomCard = ({ title, count, backgroundColor, textColor }) => {
-    return (
-      <Card
-        style={{ height: "200px", textAlign: "center", backgroundColor }}
-        bodyStyle={{
-          padding: "24px 16px",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
-        <div>
-          <h1 style={{ color: textColor, fontSize: "20px" }}>{title}</h1>
-          <p style={{ fontSize: "60px", fontWeight: "bold", color: textColor }}>
-            {count}
-          </p>
-        </div>
-      </Card>
-    );
-  };
 
   const DashboardContent = () => {
     return (
-      <div style={{ padding: "20px" }}>
+      <div className="p-4">
         {loading ? (
-          <div style={{ textAlign: "center" }}>
+          <div className="text-center">
             <Spin size="large" />
             <p>Loading...</p>
           </div>
         ) : (
-          <Row gutter={[16, 16]}>
-            <Col span={6}>
-              <CustomCard
-                title="Authors"
-                count={authorCount}
-                backgroundColor="#ffecb3"
-                textColor="black"
-              />
-            </Col>
-            <Col span={6}>
-              <CustomCard
-                title="Books"
-                count={bookCount}
-                backgroundColor="#b2dfdb"
-                textColor="black"
-              />
-            </Col>
-            <Col span={6}>
-              <CustomCard
-                title="Members"
-                count={memberCount}
-                backgroundColor="#ffcc80"
-                textColor="black"
-              />
-            </Col>
-            <Col span={6}>
-              <CustomCard
-                title="Categories"
-                count={categoryCount}
-                backgroundColor="#f8bbd0"
-                textColor="black"
-              />
-            </Col>
-          </Row>
+          <div className="grid grid-cols-4 gap-4">
+            {/* Authors */}
+            <div className="h-48 text-center bg-yellow-200">
+              <div className="p-6 flex flex-col justify-between h-full">
+                <div>
+                  <h1 className="text-lg font-semibold text-black">Authors</h1>
+                  <p className="text-5xl font-bold">{authorCount}</p>
+                </div>
+              </div>
+            </div>
+  
+            {/* Books */}
+            <div className="h-48 text-center bg-green-200">
+              <div className="p-6 flex flex-col justify-between h-full">
+                <div>
+                  <h1 className="text-lg font-semibold text-black">Books</h1>
+                  <p className="text-5xl font-bold">{bookCount}</p>
+                </div>
+              </div>
+            </div>
+  
+            {/* Members */}
+            <div className="h-48 text-center bg-orange-200">
+              <div className="p-6 flex flex-col justify-between h-full">
+                <div>
+                  <h1 className="text-lg font-semibold text-black">Members</h1>
+                  <p className="text-5xl font-bold">{memberCount}</p>
+                </div>
+              </div>
+            </div>
+  
+            {/* Categories */}
+            <div className="h-48 text-center bg-pink-200">
+              <div className="p-6 flex flex-col justify-between h-full">
+                <div>
+                  <h1 className="text-lg font-semibold text-black">Categories</h1>
+                  <p className="text-5xl font-bold">{categoryCount}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     );
@@ -152,8 +137,6 @@ const Dashboard: React.FC = () => {
         <Header />
         <Content style={{ margin: "0 16px" }}>
           <Breadcrumb style={{ margin: "10px 0" }}>
-            {/* <Breadcrumb.Item>User</Breadcrumb.Item>
-            <Breadcrumb.Item>Bill</Breadcrumb.Item> */}
           </Breadcrumb>
           <div
             style={{
@@ -175,7 +158,6 @@ const Dashboard: React.FC = () => {
               <Route path="member-setup" element={<MemberSetup />} />
               <Route path="book-setup" element={<BookSetup />} />
               <Route path="rent-book" element={<RentBook />} />
-              <Route path="return-book" element={<ReturnBook />} />
               <Route path="about" element={<About />} />
               <Route path="transaction-history" element={<History />} />
               <Route path="change-password" element={<ChangePassword />} />

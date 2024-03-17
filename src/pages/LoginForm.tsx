@@ -7,7 +7,6 @@ import { useAuth } from "../contextProvider/AuthContext";
 
 const { Title } = Typography;
 
-// Define the Login component
 const Login: React.FC = () => {
   const { loggedIn, login } = useAuth();
   const [email, setEmail] = useState<string>("");
@@ -16,10 +15,6 @@ const Login: React.FC = () => {
 
   const onFinish = async (values: any) => {
     await login(values.username, values.password);
-  };
-
-  const onFinishFailed = (errorInfo: any) => {
-    console.log('Failed:', errorInfo);
   };
 
   useEffect(() => {

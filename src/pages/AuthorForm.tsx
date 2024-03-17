@@ -1,19 +1,21 @@
-import { Form, Input, Button, message, Upload } from "antd";
-import {
-  UserOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  UploadOutlined,
-} from "@ant-design/icons";
-import { useEffect, useState } from "react";
+import { Form, Input, Button, message } from "antd";
+import { UserOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons";
+import { useEffect } from "react";
 
 import { useAddAuthor, useEditAuthor } from "../api/author/queries";
 
 interface AuthorFormProps {
   editMode: boolean;
-  initialData: Object | null;
+  initialData: AuthorDataType | null;
   onSuccess: () => void;
   onUpdateAuthor: (data: any) => void;
+}
+
+interface AuthorDataType {
+  authorId: any;
+  name: string;
+  email: string;
+  mobileNumber: string;
 }
 
 const AuthorForm: React.FC<AuthorFormProps> = ({
@@ -23,8 +25,6 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
   onUpdateAuthor,
 }) => {
   const [form] = Form.useForm();
-
-  const [fileList, setFileList] = useState<any[]>([]);
 
   const { mutate: addAuthor, isLoading: isAddingAuthor } = useAddAuthor();
   const { mutate: editAuthor, isLoading: isEditingAuthor } = useEditAuthor();
@@ -66,7 +66,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
     console.log("Received values:", values);
   };
 
-  const onFinishFailed = (errorInfo) => {
+  const onFinishFailed = (errorInfo:any) => {
     console.log("Failed:", errorInfo);
     message.error("Please check the form for errors.");
   };
@@ -85,7 +85,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
     };
   }, [form, initialData]);
 
-  const validatePhoneNumber = (_, value) => {
+  const validatePhoneNumber = (_:any, value:any) => {
     const phoneNumberRegex = /^98\d{8}$/;
     if (value && !phoneNumberRegex.test(value)) {
       return Promise.reject("Invalid phone number");

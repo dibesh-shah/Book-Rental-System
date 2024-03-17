@@ -1,14 +1,5 @@
 import { useState } from "react";
-import {
-  Space,
-  Table,
-  Button,
-  Drawer,
-  Modal,
-  message,
-  Form,
-  Input,
-} from "antd";
+import { Button, message, Form, Input } from "antd";
 
 import { useResetUser } from "../api/user/queries";
 
@@ -26,7 +17,6 @@ const ChangePassword: React.FC = () => {
         console.log(data);
         message.success(`Password changed Successfully`);
         form.resetFields();
-        // setIsModalOpen(false);
       },
       onError: (error: any) => {
         message.error(error.message);

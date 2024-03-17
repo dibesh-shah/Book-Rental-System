@@ -167,7 +167,7 @@ const MemberSetup: React.FC = () => {
     setOpenModal(false);
   };
 
-  const showDrawer = (editMode: boolean, memberData) => {
+  const showDrawer = (editMode: boolean, memberData:any) => {
     setEditMode(editMode);
     setSelectedMemberData(memberData);
     setOpen(true);

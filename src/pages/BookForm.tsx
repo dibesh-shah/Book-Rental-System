@@ -27,9 +27,8 @@ import { useFetchCategory } from "../api/category/queries";
 import dayjs from "dayjs";
 
 interface BookFormProps {
-  initialdata?: BookDataType | null | undefined;
+  initialData: BookDataType | null | undefined;
   editMode: boolean;
-  initialData: Object | null;
   onSuccess: () => void;
   onUpdateBook: (data: any) => void;
 }
@@ -46,6 +45,8 @@ interface BookDataType {
   categoryId: any;
   authorId: any;
   photo: any;
+  authorName: string;
+  categoryName: string;
 }
 
 const { Option } = Select;
@@ -79,8 +80,8 @@ const BookForm: React.FC<BookFormProps> = ({
   const { data: CategoryData } = useFetchCategory();
   const { data: AuthorData } = useFetchAuthor();
 
-  let authorsArray = [];
-  let categoryArray = [];
+  let authorsArray:any = [];
+  let categoryArray:any = [];
 
   if (initialData) {
     const { authorName, categoryName } = initialData;
@@ -185,7 +186,7 @@ const BookForm: React.FC<BookFormProps> = ({
               defaultValue={categoryArray}
               disabled={editMode ? true : false}
             >
-              {CategoryData?.map((category) => (
+              {CategoryData?.map((category:any) => (
                 <Option key={category.id} value={category.id}>
                   {category.name}
                 </Option>
@@ -206,7 +207,7 @@ const BookForm: React.FC<BookFormProps> = ({
               defaultValue={authorsArray}
               disabled={editMode ? true : false}
             >
-              {AuthorData?.map((author) => (
+              {AuthorData?.map((author:any) => (
                 <Option key={author.authorId} value={author.id}>
                   {author.name}
                 </Option>

@@ -10,12 +10,11 @@ import { useEffect } from "react";
 import {
   useAddMember,
   useEditMember,
-  useUploadMember,
 } from "../api/member/queries";
 
 interface MemberFormProps {
   editMode: boolean;
-  initialData: Object | null;
+  initialData: any | null;
   onSuccess: () => void;
   onUpdateMember: (data:any) => void;
 }
@@ -30,7 +29,6 @@ const MemberForm: React.FC<MemberFormProps> = ({
 
   const { mutate: addMember, isLoading: isAddingMember } = useAddMember();
   const { mutate: editMember, isLoading: isEditingMember } = useEditMember();
-  const { mutate: uploadMember, isLoading: isUploadingMember } = useUploadMember();
 
   const onFinish = (values: any) => {
     let payload: any = {
@@ -69,7 +67,7 @@ const MemberForm: React.FC<MemberFormProps> = ({
     console.log("Received values:", values);
   };
 
-  const onFinishFailed = (errorInfo) => {
+  const onFinishFailed = (errorInfo:any) => {
     console.log("Failed:", errorInfo);
     message.error("Please check the form for errors.");
   };
@@ -88,7 +86,7 @@ const MemberForm: React.FC<MemberFormProps> = ({
     };
   }, [form, initialData]);
 
-  const validatePhoneNumber = (_, value) => {
+  const validatePhoneNumber = (_:any, value:any) => {
     const phoneNumberRegex =  /^98\d{8}$/;
     if (value && !phoneNumberRegex.test(value)) {
       return Promise.reject("Invalid phone number");

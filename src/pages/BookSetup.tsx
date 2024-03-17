@@ -72,7 +72,7 @@ const BookSetup: React.FC = () => {
     setOpenModal(false);
   };
 
-  const showDrawer = (editMode: boolean, bookData) => {
+  const showDrawer = (editMode: boolean, bookData:any) => {
     setEditMode(editMode);
     setSelectedBookData(bookData);
     setOpen(true);
@@ -114,7 +114,7 @@ const BookSetup: React.FC = () => {
       setFilteredData(null);
       bookRefetch();
     } else {
-      const filtered = books.filter((record) => {
+      const filtered = books.filter((record:any) => {
         return (
           record.id?.toString().toLowerCase().includes(inputValue) ||
           record.categoryName?.toLowerCase().includes(inputValue) ||
@@ -207,7 +207,7 @@ const BookSetup: React.FC = () => {
           <Button
             danger
             icon={<DeleteOutlined />}
-            onClick={() => showModal(_record.id)}
+            onClick={() => showModal(parseInt(_record.id))}
           >
             Delete
           </Button>
