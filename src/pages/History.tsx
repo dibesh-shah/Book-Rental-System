@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table, Button, message, DatePicker } from "antd";
 import type { TablePaginationConfig, TableProps } from "antd";
-import { DownloadOutlined } from "@ant-design/icons";
+import { DownloadOutlined, FilterOutlined } from "@ant-design/icons";
 
 import {
   useDownloadTransaction,
@@ -21,14 +21,14 @@ interface RentDataType {
 }
 
 const History: React.FC = () => {
-
   const { RangePicker } = DatePicker;
-  
+
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
   const [fromDate, setFromDate] = useState<any>(null);
   const [toDate, setToDate] = useState<any>(null);
   const [historyData, setHistoryData] = useState<RentDataType[] | any>(null);
+  const [showRangePicker, setShowRangePicker] = useState(false);
 
   const { data: transactions, isLoading: isLoadingTransaction } =
     useFetchAllTransaction(
@@ -81,6 +81,9 @@ const History: React.FC = () => {
     setToDate(dayjs(value?.[1]));
   };
 
+  const handleFilterClick = () => {
+    setShowRangePicker(!showRangePicker);
+  };
 
   const columns: TableProps<RentDataType>["columns"] = [
     {
@@ -133,8 +136,20 @@ const History: React.FC = () => {
       </div>
 
       <div className="flex justify-between mb-6">
-        <div>
-          <RangePicker onChange={handleDateChange} />
+        <div className="flex justify-between">
+          <Button
+          icon={<FilterOutlined />}
+            onClick={handleFilterClick}
+            className="bg-green-400 text-white"
+          >
+            {showRangePicker ? "Hide Filter" : "Show Filter"}
+          </Button>
+
+          {showRangePicker && (
+            <div>
+              <RangePicker onChange={handleDateChange} className="ml-2" />
+            </div>
+          )}
         </div>
         <Button
           loading={downloadLoading}

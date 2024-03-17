@@ -9,8 +9,14 @@ import {
   Form,
   Input,
 } from "antd";
-import type { TableProps } from "antd";
-import { EditOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined } from "@ant-design/icons";
+import type { TableProps, UploadProps } from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  UploadOutlined,
+  InboxOutlined,
+} from "@ant-design/icons";
 
 import AuthorForm from "./AuthorForm";
 import {
@@ -18,7 +24,9 @@ import {
   useDownloadAuthor,
   useFetchAuthor,
   useFetchAuthorById,
+  useUploadAuthor,
 } from "../api/author/queries";
+import Dragger from "antd/es/upload/Dragger";
 
 interface AuthorDataType {
   authorId: number;
@@ -34,11 +42,15 @@ const AuthorSetup: React.FC = () => {
   const [searchId, setSearchId] = useState(null);
   const [searchText, setSearchText] = useState(null);
   const [filteredData, setFilteredData] = useState<AuthorDataType | any>(null);
-  const [fetchedAuthorDataById, setFetchedAuthorDataById] = useState<AuthorDataType | any>(null);
+  const [fetchedAuthorDataById, setFetchedAuthorDataById] = useState<
+    AuthorDataType | any
+  >(null);
   const [openModal, setOpenModal] = useState(false);
   const [deleteId, setDeleteId] = useState(Number);
   const [modalTitle, setModalTitle] = useState(String);
   const [page, setPage] = useState(1);
+  const [openUploadModal, setOpenUploadModal] = useState(false);
+  const [fileList, setFileList] = useState<any[]>([]);
 
   const {
     data: authors,
@@ -51,8 +63,10 @@ const AuthorSetup: React.FC = () => {
     useDeleteAuthor();
   const { mutate: authorById, isLoading: authorByIdLoading } =
     useFetchAuthorById();
+  const { mutate: uploadAuthor } = useUploadAuthor();
 
   const [form] = Form.useForm();
+  const [uploadForm] = Form.useForm();
 
   const handleDownload = () => {
     downloadAuthor(undefined, {
@@ -70,6 +84,56 @@ const AuthorSetup: React.FC = () => {
       },
       onError: (errorMessage: any) => {
         message.error(`${errorMessage}`);
+      },
+    });
+  };
+
+  const showUploadModal = () => {
+    setOpenUploadModal(true);
+  };
+
+  const handleUploadOk = () => {
+    setOpenUploadModal(false);
+  };
+
+  const handleUploadCancel = () => {
+    setOpenUploadModal(false);
+  };
+
+  const props: UploadProps = {
+    name: "file",
+    fileList: fileList,
+    action: "",
+    beforeUpload: (file: File) => {
+      const isExcel =
+        file.type === "application/vnd.ms-excel" ||
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      if (!isExcel) {
+        message.error("You can only upload Excel files!");
+        return false;
+      }
+      setFileList([file]);
+      onUploadFinish(file);
+      return false;
+    },
+    onRemove: () => {
+      setFileList([]);
+    },
+  };
+
+  const onUploadFinish = (e: any) => {
+    let payload = {
+      file: e.file.file,
+    };
+    uploadAuthor(payload, {
+      onSuccess: () => {
+        message.success("Sucessfully uploaded");
+        setOpenUploadModal(false);
+        authorRefetch();
+      },
+      onError: (data) => {
+        message.error(`Failed ${data}`);
       },
     });
   };
@@ -118,7 +182,7 @@ const AuthorSetup: React.FC = () => {
 
   const onFinish = (values: any) => {
     console.log(values.id);
-    if (isNaN(values.id) ){
+    if (isNaN(values.id)) {
       message.error("Please enter a valid Author Id");
       return false;
     }
@@ -161,10 +225,10 @@ const AuthorSetup: React.FC = () => {
 
   const handleUpdateAuthor = (updateAuthor: any) => {
     console.log(updateAuthor);
-    if(searchText){
+    if (searchText) {
       const authorArray = [updateAuthor];
       setFilteredData(authorArray);
-    }else{
+    } else {
       setFetchedAuthorDataById(updateAuthor);
     }
   };
@@ -264,11 +328,16 @@ const AuthorSetup: React.FC = () => {
         </Form>
 
         <div>
-          <Button loading={downloadLoading} onClick={handleDownload} icon={<DownloadOutlined />} className="mr-4">
+          <Button
+            loading={downloadLoading}
+            onClick={handleDownload}
+            icon={<DownloadOutlined />}
+            className="mr-4"
+          >
             Download Excel
           </Button>
 
-          <Button  icon={<UploadOutlined />}>
+          <Button icon={<UploadOutlined />} onClick={showUploadModal}>
             Upload Excel
           </Button>
         </div>
@@ -290,7 +359,13 @@ const AuthorSetup: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={searchId? [fetchedAuthorDataById] : searchText ? filteredData : authors }
+        dataSource={
+          searchId
+            ? [fetchedAuthorDataById]
+            : searchText
+            ? filteredData
+            : authors
+        }
         loading={authorLoading}
         bordered
         rowKey={(record) => record.authorId}
@@ -312,6 +387,43 @@ const AuthorSetup: React.FC = () => {
         okButtonProps={{ className: "bg-blue-400" }}
       >
         <p>Are you sure you want to delete?</p>
+      </Modal>
+
+      <Modal
+        footer
+        title="Upload Author Excel"
+        open={openUploadModal}
+        onOk={handleUploadOk}
+        onCancel={handleUploadCancel}
+      >
+        <Form
+          form={uploadForm}
+          onFinish={onUploadFinish}
+          className="flex flex-col justify-between h-full"
+        >
+          <Form.Item name="file" className="mb-4">
+            <Dragger name="file" {...props}>
+              <p className="ant-upload-drag-icon">
+                <InboxOutlined />
+              </p>
+              <p className="ant-upload-text">
+                Click or drag file to this area to upload
+              </p>
+              <p className="ant-upload-hint">
+                Please Upload Excel File
+              </p>
+            </Dragger>
+          </Form.Item>
+          <Form.Item className="flex justify-center">
+            <Button
+              className="bg-blue-600 text-white "
+              type="default"
+              htmlType="submit"
+            >
+              Upload
+            </Button>
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

@@ -49,7 +49,7 @@ export const useDownloadMember = () => {
 
 export const useUploadMember = () => {
   return useMutation((requestData:any)=> {
-   return makeHttpRequest(uploadMember,{
+   return makeExcelRequest(uploadMember,{
        requestData
    });
   });

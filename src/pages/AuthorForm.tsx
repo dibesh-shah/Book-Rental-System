@@ -7,17 +7,13 @@ import {
 } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 
-import {
-  useAddAuthor,
-  useEditAuthor,
-  useUploadAuthor,
-} from "../api/author/queries";
+import { useAddAuthor, useEditAuthor } from "../api/author/queries";
 
 interface AuthorFormProps {
   editMode: boolean;
   initialData: Object | null;
   onSuccess: () => void;
-  onUpdateAuthor: (data:any) => void;
+  onUpdateAuthor: (data: any) => void;
 }
 
 const AuthorForm: React.FC<AuthorFormProps> = ({
@@ -32,7 +28,6 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
 
   const { mutate: addAuthor, isLoading: isAddingAuthor } = useAddAuthor();
   const { mutate: editAuthor, isLoading: isEditingAuthor } = useEditAuthor();
-  const { mutate: uploadAuthor, isLoading: isUploadingAuthor } = useUploadAuthor();
 
   const onFinish = (values: any) => {
     let payload: any = {
@@ -91,40 +86,11 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
   }, [form, initialData]);
 
   const validatePhoneNumber = (_, value) => {
-    const phoneNumberRegex =  /^98\d{8}$/;
+    const phoneNumberRegex = /^98\d{8}$/;
     if (value && !phoneNumberRegex.test(value)) {
       return Promise.reject("Invalid phone number");
     }
     return Promise.resolve();
-  };
-
-  const uploadProps = {
-    name: "file",
-    action: "",
-    fileList: fileList,
-    beforeUpload: (file: File) => {
-      setFileList([file]);
-      handleUpload(file);
-      console.log(file);
-      return false;
-    },
-    onRemove: () => {
-      setFileList([]);
-    },
-  };
-
-  const handleUpload = (file: File) => {
-    uploadAuthor({file}, {
-      onSuccess: () => {
-        setFileList([]); 
-        onSuccess();
-        message.success(`File Uploaded Successfully`);
-        onReset();
-      },
-      onError: () => {
-        message.error(`Error Uploading `);
-      },
-    });
   };
 
   return (
@@ -201,14 +167,6 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
             )}
           </Form.Item>
         </div>
-      </Form>
-
-      <Form>
-        <Form.Item className="mr-auto ml-4">
-          <Upload {...uploadProps} >
-            <Button icon={<UploadOutlined  />}>Upload Excel</Button>
-          </Upload>
-        </Form.Item>
       </Form>
     </>
   );

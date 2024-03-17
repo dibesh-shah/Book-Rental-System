@@ -36,6 +36,9 @@ const Login: React.FC = () => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
+        backgroundImage: `url(../../public/background.jpg)`,
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
       }}
     >
       <Form
@@ -43,7 +46,7 @@ const Login: React.FC = () => {
         onFinish={onFinish}
         initialValues={{ remember: true }}
         style={{ width: 350 }}
-        className="shadow-md rounded-lg p-6"
+        className="shadow-md rounded-lg p-6 bg-white"
       >
         <Title level={4} style={{ textAlign: "center" }}>
           Login

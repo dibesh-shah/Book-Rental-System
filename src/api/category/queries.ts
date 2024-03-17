@@ -48,7 +48,7 @@ export const useDownloadCategory = () => {
 
 export const useUploadCategory = () => {
   return useMutation((requestData:any)=> {
-   return makeHttpRequest(uploadCategory,{
+   return makeExcelRequest(uploadCategory,{
        requestData
    });
   });
