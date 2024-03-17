@@ -10,9 +10,8 @@ import {
   Modal,
 } from "antd";
 import type { TableProps } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons";
 
-import { RentData } from "../assets/static-data";
 import RentForm from "./RentForm";
 import {
   useDeleteTransaction,
@@ -25,7 +24,7 @@ import {
 interface RentDataType {
   id: number;
   bookName: string;
-  code: any;
+  code: number;
   fromDate: any;
   toDate: any;
   rentType: string;
@@ -37,12 +36,13 @@ const RentBook: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [selectedRentData, setSelectedRentData] = useState(null);
   const [searchId, setSearchId] = useState(null);
-  const [fetchedTransactionDataById, setFetchedTransactionDataById] = useState<
-    RentDataType | any
-  >(null);
+  const [fetchedTransactionDataById, setFetchedTransactionDataById] = useState<RentDataType | any>(null);
+  const [searchText, setSearchText] = useState(null);
+  const [filteredData, setFilteredData] = useState<RentDataType | any>(null);
   const [openModal, setOpenModal] = useState(false);
   const [deleteId, setDeleteId] = useState(Number);
   const [modalTitle, setModalTitle] = useState(String);
+  const [page, setPage] = useState(1);
 
   const {
     data: transactions,
@@ -60,7 +60,7 @@ const RentBook: React.FC = () => {
   const [form] = Form.useForm();
 
   const handleDownload = () => {
-    downloadTransaction("", {
+    downloadTransaction(undefined, {
       onSuccess: (data) => {
         // message.success(`Deleted Author  Successfully`);
         const blob = new Blob([data], { type: "application/vnd.ms-excel" });
@@ -73,6 +73,9 @@ const RentBook: React.FC = () => {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+      },
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
       },
     });
   };
@@ -95,6 +98,9 @@ const RentBook: React.FC = () => {
         setOpenModal(false);
         refetchTransaction();
       },
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
+      },
     });
   };
 
@@ -114,33 +120,59 @@ const RentBook: React.FC = () => {
     setEditMode(false);
     setSelectedRentData(null);
     refetchTransaction();
-    // console.log('closed')
   };
 
   const onFinish = (values: any) => {
     console.log(values.id);
+    if (isNaN(values.id) ){
+      message.error("Please enter a valid Rent Id");
+      return false;
+    }
     transactionById(values.id, {
       onSuccess: (data) => {
+        setFilteredData(null);
+        setSearchText(null);
         setSearchId(values.id);
         console.log(data);
         setFetchedTransactionDataById(data);
       },
-      onError: (error) => {
-        message.error(error.message);
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
       },
     });
   };
 
-  const onChange = (events: any) => {
-    if (!events.target.value) {
-      setFetchedTransactionDataById(null);
+  const onChange = (event: any) => {
+    const inputValue = event.target.value.toLowerCase();
+    if (!inputValue) {
       setSearchId(null);
+      setSearchText(null);
+      setFilteredData(null);
       refetchTransaction();
+    } else {
+      const filtered = transactions.filter((record: any) => {
+        return (
+          record.id?.toString().toLowerCase().includes(inputValue) ||
+          record.code?.toString().toLowerCase().includes(inputValue) ||
+          record.bookName?.toLowerCase().includes(inputValue) ||
+          record.memberName?.toLowerCase().includes(inputValue) ||
+          record.rentType?.toLowerCase().includes(inputValue)
+        );
+      });
+      setFilteredData(filtered);
+      setSearchText(inputValue);
+      setSearchId(null);
     }
   };
 
   const handleUpdateTransaction = (updateTransaction: any) => {
     setFetchedTransactionDataById(updateTransaction);
+    if(searchText){
+      const transactionArray = [updateTransaction];
+      setFilteredData(transactionArray);
+    }else{
+      setFetchedTransactionDataById(updateTransaction);
+    }
   };
 
   const sendMail = () => {
@@ -157,8 +189,9 @@ const RentBook: React.FC = () => {
   const columns: TableProps<RentDataType>["columns"] = [
     {
       title: "SN",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "sn",
+      key: "sn",
+      render: (_, __, index) => (page - 1) * 7 + index + 1,
     },
     {
       title: "Code",
@@ -210,7 +243,7 @@ const RentBook: React.FC = () => {
             icon={<DeleteOutlined />}
             onClick={() => showModal(_record.id)}
           >
-            Delete
+            Return
           </Button>
         </Space>
       ),
@@ -247,7 +280,6 @@ const RentBook: React.FC = () => {
           >
             <Input
               placeholder="Enter Transaction Id"
-              type="number"
               onChange={onChange}
             />
           </Form.Item>
@@ -268,7 +300,7 @@ const RentBook: React.FC = () => {
           </Button>
         </Form>
 
-        <Button loading={downloadLoading} onClick={handleDownload}>
+        <Button loading={downloadLoading} onClick={handleDownload} icon={<DownloadOutlined />}>
           Download Excel
         </Button>
       </div>
@@ -289,11 +321,17 @@ const RentBook: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={searchId ? [fetchedTransactionDataById] : transactions}
+        dataSource={searchId? [fetchedTransactionDataById] : searchText ? filteredData : transactions }
         bordered
         loading={isLoadingTransaction}
         rowKey={(record) => record.id}
-        pagination={{ pageSize: 7 }}
+        pagination={{
+          pageSize: 7,
+          responsive: true,
+          onChange(current) {
+            setPage(current);
+          },
+        }}
       />
 
       <Modal

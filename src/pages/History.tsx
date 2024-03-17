@@ -1,26 +1,14 @@
-import { useState } from "react";
-import {
-  Space,
-  Table,
-  Button,
-  Drawer,
-  Form,
-  Input,
-  message,
-  Modal,
-} from "antd";
-import type { TableProps } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useEffect, useState } from "react";
+import { Table, Button, message, DatePicker } from "antd";
+import type { TablePaginationConfig, TableProps } from "antd";
+import { DownloadOutlined } from "@ant-design/icons";
 
-import { RentData } from "../assets/static-data";
-import RentForm from "./RentForm";
 import {
-  useDeleteTransaction,
   useDownloadTransaction,
   useFetchAllTransaction,
-  useFetchTransaction,
-  useFindTransactionById,
 } from "../api/transaction/queries";
+import { RangePickerProps } from "antd/es/date-picker";
+import dayjs from "dayjs";
 
 interface RentDataType {
   id: number;
@@ -33,35 +21,28 @@ interface RentDataType {
 }
 
 const History: React.FC = () => {
-  const [open, setOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [selectedRentData, setSelectedRentData] = useState(null);
-  const [searchId, setSearchId] = useState(null);
-  const [fetchedTransactionDataById, setFetchedTransactionDataById] = useState<
-    RentDataType | any
-  >(null);
-  const [openModal, setOpenModal] = useState(false);
-  const [deleteId, setDeleteId] = useState(Number);
-  const [modalTitle, setModalTitle] = useState(String);
 
-  const {
-    data: transactions,
-    isLoading: isLoadingTransaction,
-    refetch: refetchTransaction,
-  } = useFetchAllTransaction();
-  const { mutate: transactionById, isLoading: isLoadingTransactionId } =
-    useFindTransactionById();
+  const { RangePicker } = DatePicker;
+  
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [fromDate, setFromDate] = useState<any>(null);
+  const [toDate, setToDate] = useState<any>(null);
+  const [historyData, setHistoryData] = useState<RentDataType[] | any>(null);
+
+  const { data: transactions, isLoading: isLoadingTransaction } =
+    useFetchAllTransaction(
+      pageNumber,
+      pageSize,
+      fromDate?.format("YYYY/MM/DD") || null,
+      toDate?.format("YYYY/MM/DD") || null
+    );
   const { mutate: downloadTransaction, isLoading: downloadLoading } =
     useDownloadTransaction();
-  const { mutate: deleteransaction, isLoading: isDeletingTransaction } =
-    useDeleteTransaction();
-
-  const [form] = Form.useForm();
 
   const handleDownload = () => {
-    downloadTransaction("", {
+    downloadTransaction(undefined, {
       onSuccess: (data) => {
-        // message.success(`Deleted Author  Successfully`);
         const blob = new Blob([data], { type: "application/vnd.ms-excel" });
         console.log(data);
         const url = window.URL.createObjectURL(blob);
@@ -73,80 +54,40 @@ const History: React.FC = () => {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-    });
-  };
-
-  const showModal = (id: number) => {
-    setModalTitle(`Transaction ID - ${id}`);
-    setDeleteId(id);
-    setOpenModal(true);
-  };
-
-  const handleOk = () => {
-    // setConfirmLoading(isDeletingAuthor);
-    console.log(isDeletingTransaction);
-    console.log(deleteId);
-    deleteransaction(deleteId, {
-      onSuccess: () => {
-        form.resetFields();
-        setSearchId(null);
-        message.success(`Deleted Transaction  Successfully`);
-        setOpenModal(false);
-        refetchTransaction();
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
       },
     });
   };
 
-  const handleCancel = () => {
-    console.log("Clicked cancel button");
-    setOpenModal(false);
+  useEffect(() => {
+    setHistoryData(transactions?.content);
+  }, [transactions]);
+
+  const onTableChange = (pagination: TablePaginationConfig) => {
+    const { current, pageSize } = pagination;
+    setPageNumber(current || 1);
+    setPageSize(pageSize || 10);
   };
 
-  const showDrawer = (editMode: boolean, rentData) => {
-    setEditMode(editMode);
-    setSelectedRentData(rentData);
-    setOpen(true);
-  };
-
-  const onClose = () => {
-    setOpen(false);
-    setEditMode(false);
-    setSelectedRentData(null);
-    refetchTransaction();
-    // console.log('closed')
-  };
-
-  const onFinish = (values: any) => {
-    console.log(values.id);
-    transactionById(values.id, {
-      onSuccess: (data) => {
-        setSearchId(values.id);
-        console.log(data);
-        setFetchedTransactionDataById(data);
-      },
-      onError: (error) => {
-        message.error(error.message);
-      },
-    });
-  };
-
-  const onChange = (events: any) => {
-    if (!events.target.value) {
-      setFetchedTransactionDataById(null);
-      setSearchId(null);
-      refetchTransaction();
+  const handleDateChange = (value: RangePickerProps["value"]) => {
+    if (!value) {
+      setFromDate(undefined);
+      setToDate(undefined);
+      return;
     }
+
+    setFromDate(dayjs(value?.[0]));
+    setToDate(dayjs(value?.[1]));
   };
 
-  const handleUpdateTransaction = (updateTransaction: any) => {
-    setFetchedTransactionDataById(updateTransaction);
-  };
 
   const columns: TableProps<RentDataType>["columns"] = [
     {
       title: "SN",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "sn",
+      key: "sn",
+      render: (_, __, index) => index + 1,
     },
     {
       title: "Code",
@@ -167,38 +108,20 @@ const History: React.FC = () => {
       title: "From",
       dataIndex: "from_date",
       key: "from_date",
+      render: (text) => {
+        const date = new Date(text);
+        return <span>{date.toISOString().split("T")[0]}</span>;
+      },
     },
     {
       title: "To",
       dataIndex: "to_date",
       key: "to_date",
+      render: (text) => {
+        const date = new Date(text);
+        return <span>{date.toISOString().split("T")[0]}</span>;
+      },
     },
-
-    // {
-    //   title: "Action",
-    //   key: "action",
-    //   render: (_, _record) => (
-    //     <Space size="middle">
-    //       <Button
-    //         type="default"
-    //         icon={<EditOutlined />}
-    //         onClick={() => {
-    //           showDrawer(true, _record);
-    //           console.log(_record);
-    //         }}
-    //       >
-    //         Edit
-    //       </Button>
-    //       <Button
-    //         danger
-    //         icon={<DeleteOutlined />}
-    //         onClick={() => showModal(_record.id)}
-    //       >
-    //         Delete
-    //       </Button>
-    //     </Space>
-    //   ),
-    // },
   ];
 
   return (
@@ -209,45 +132,35 @@ const History: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex justify-end mb-6">
-        <Button loading={downloadLoading} onClick={handleDownload}>
+      <div className="flex justify-between mb-6">
+        <div>
+          <RangePicker onChange={handleDateChange} />
+        </div>
+        <Button
+          loading={downloadLoading}
+          onClick={handleDownload}
+          icon={<DownloadOutlined />}
+        >
           Download Excel
         </Button>
       </div>
 
-      <Drawer
-        title={editMode ? "Edit Rent" : "Rent Book"}
-        width={700}
-        onClose={onClose}
-        open={open}
-      >
-        <RentForm
-          editMode={editMode}
-          initialData={selectedRentData}
-          onSuccess={onClose}
-          onUpdateTransaction={handleUpdateTransaction}
-        />
-      </Drawer>
-
       <Table
         columns={columns}
-        dataSource={searchId ? [fetchedTransactionDataById] : transactions}
+        dataSource={historyData}
         bordered
         loading={isLoadingTransaction}
         rowKey={(record) => record.id}
-        pagination={{ pageSize: 7 }}
+        pagination={{
+          current: transactions?.currentPageIndex,
+          total: transactions?.totalElements,
+          pageSize: transactions?.numberOfElements,
+          showQuickJumper: true,
+          showSizeChanger: true,
+          pageSizeOptions: [5, 10, 15, 20, 25, 30],
+        }}
+        onChange={onTableChange}
       />
-
-      <Modal
-        title={modalTitle}
-        open={openModal}
-        onOk={handleOk}
-        confirmLoading={isDeletingTransaction}
-        onCancel={handleCancel}
-        okButtonProps={{ className: "bg-blue-400" }}
-      >
-        <p>Are you sure you want to delete?</p>
-      </Modal>
     </div>
   );
 };

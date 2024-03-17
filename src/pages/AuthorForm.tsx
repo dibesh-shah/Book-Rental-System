@@ -51,6 +51,9 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
           onUpdateAuthor(payload);
           onReset();
         },
+        onError: (errorMessage: any) => {
+          message.error(`${errorMessage}`);
+        },
       });
     } else {
       addAuthor(payload, {
@@ -58,6 +61,9 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
           onSuccess();
           message.success(`Added Author ${values.name} Successfully`);
           onReset();
+        },
+        onError: (errorMessage: any) => {
+          message.error(`${errorMessage}`);
         },
       });
     }
@@ -75,7 +81,6 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
   };
 
   useEffect(() => {
-    // Use setFieldsValue to set initial values after the form is mounted
     if (initialData) {
       form.setFieldsValue(initialData);
     }
@@ -86,8 +91,7 @@ const AuthorForm: React.FC<AuthorFormProps> = ({
   }, [form, initialData]);
 
   const validatePhoneNumber = (_, value) => {
-    // Custom validation function for phone number
-    const phoneNumberRegex = /^[0-9]{10}$/;
+    const phoneNumberRegex =  /^98\d{8}$/;
     if (value && !phoneNumberRegex.test(value)) {
       return Promise.reject("Invalid phone number");
     }

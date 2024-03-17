@@ -3,12 +3,9 @@ import { Space, Table, Button, Drawer, message, Form, Input, Modal } from "antd"
 import type { TableProps } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
-import { BookData } from "../assets/static-data";
 import BookForm from "./BookForm";
 import {
   useDeleteBook,
-  useAddBook,
-  useEditBook,
   useFetchBook,
   useFetchBookById,
 } from "../api/book/queries";
@@ -17,12 +14,12 @@ import dayjs from "dayjs";
 interface BookDataType {
   id: string;
   name: string;
-  rating: any;
-  stock: any;
+  rating: number;
+  stock: number;
   publishedDate: any;
   file: any;
   isbn: any;
-  pages: any;
+  pages: number;
   categoryId: any;
   authorId: any;
   photo:any;
@@ -34,9 +31,12 @@ const BookSetup: React.FC = () => {
   const [selectedBookData, setSelectedBookData] = useState(null);
   const [searchId, setSearchId] = useState(null);
   const [fetchedBookDataById, setFetchedBookDataById] = useState<BookDataType|any>(null);
+  const [searchText, setSearchText] = useState(null);
+  const [filteredData, setFilteredData] = useState<BookDataType | any>(null);
   const [openModal, setOpenModal] = useState(false);
   const [deleteId, setDeleteId] = useState(Number);
   const [modalTitle, setModalTitle] = useState(String);
+  const [page, setPage] = useState(1);
 
   const {data: books, isLoading: bookLoading, refetch: bookRefetch, } = useFetchBook();
   const { mutate: deleteBook, isLoading: isDeletingBook } = useDeleteBook();
@@ -51,17 +51,19 @@ const BookSetup: React.FC = () => {
   };
 
   const handleOk = () => {
-    // setConfirmLoading(isDeletingAuthor);
     console.log(isDeletingBook)
     console.log(deleteId);
     deleteBook(deleteId,{
       onSuccess:()=>{
         form.resetFields();
         setSearchId(null);
-        message.success(`Deleted Author  Successfully`);
+        message.success(`Deleted Book  Successfully`);
         setOpenModal(false);
         bookRefetch();
-      }
+      },
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
+      },
     })
   };
 
@@ -85,35 +87,66 @@ const BookSetup: React.FC = () => {
 
   const onFinish = (values: any) => {
     console.log(values.id)
+    if (isNaN(values.id) ){
+      message.error("Please enter a valid Book Id");
+      return false;
+    }
     bookById(values.id, {
       onSuccess: (data) => {
+        setFilteredData(null);
+        setSearchText(null);
         setSearchId(values.id);
-        console.log(data)
+        console.log(data);
         setFetchedBookDataById(data);
       },
-      onError:(error)=>{
-        message.error(error.message);
-      }
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
+      },
     });
   };
 
-  const onChange = (events:any) => {
-    if(!events.target.value){
-      setFetchedBookDataById(null);
+  const onChange = (event:any) => {
+    const inputValue = event.target.value.toLowerCase();
+
+    if (!inputValue) {
       setSearchId(null);
+      setSearchText(null);
+      setFilteredData(null);
       bookRefetch();
+    } else {
+      const filtered = books.filter((record) => {
+        return (
+          record.id?.toString().toLowerCase().includes(inputValue) ||
+          record.categoryName?.toLowerCase().includes(inputValue) ||
+          record.authorName?.toLowerCase().includes(inputValue) ||
+          record.isbn?.toLowerCase().includes(inputValue) ||
+          record.stock?.toString().toLowerCase().includes(inputValue) ||
+          record.pages?.toString().toLowerCase().includes(inputValue) ||
+          record.name?.toLowerCase().includes(inputValue)
+        );
+      });
+      setFilteredData(filtered);
+      setSearchText(inputValue);
+      setSearchId(null);
     }
   }
   
   const handleUpdateBook = (updateBook:any) => {
-    setFetchedBookDataById(updateBook);
+    if(searchText){
+      const bookArray = [updateBook];
+      setFilteredData(bookArray);
+    }else{
+      setFetchedBookDataById(updateBook);
+    }
   }
+  
 
   const columns: TableProps<BookDataType>["columns"] = [
     {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
+      title: "SN",
+      dataIndex: "sn",
+      key: "sn",
+      render: (_, __, index) => (page - 1) * 7 + index + 1,
     },
     {
       title: "Name",
@@ -145,6 +178,11 @@ const BookSetup: React.FC = () => {
       title: "Rating",
       dataIndex: "rating",
       key: "rating",
+    },
+    {
+      title: "Pages",
+      dataIndex: "pages",
+      key: "pages",
     },
     {
       title: "Stock",
@@ -200,11 +238,10 @@ const BookSetup: React.FC = () => {
             name="id"
             
             rules={[
-              { required: true, message: "Please enter Book Id!" },
-              // { type: "number", message: "Please Enter valid Id" },
+              { required: true, message: "Please enter Book Details!" },
             ]}
           >
-            <Input placeholder="Enter Book Id" type="number" onChange={onChange} />
+            <Input placeholder="Enter Book Details"  onChange={onChange} />
           </Form.Item>
 
           <Form.Item>
@@ -237,11 +274,17 @@ const BookSetup: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={searchId?[fetchedBookDataById]:books}
+        dataSource={searchId? [fetchedBookDataById] : searchText ? filteredData : books }
         loading={bookLoading}
         bordered
         rowKey={(record) => record.id}
-        pagination={{ pageSize: 7 }}
+        pagination={{
+          pageSize: 7,
+          responsive: true,
+          onChange(current) {
+            setPage(current);
+          },
+        }}
       />
 
       <Modal

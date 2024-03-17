@@ -16,9 +16,21 @@ const {
   mailTransaction,
 } = transaction;
 
-export const useFetchAllTransaction = () => {
-  return useQuery([fetchAllTransaction.queryKeyName], () => {
-    return makeHttpRequest(fetchAllTransaction);
+export const useFetchAllTransaction = (
+  pageNumber: number,
+  pageSize: number,
+  fromDate: string,
+  toDate: string
+) => {
+  return useQuery([fetchAllTransaction.queryKeyName, pageNumber, pageSize, fromDate, toDate], () => {
+    return makeHttpRequest(fetchAllTransaction, {
+      params: {
+        page: pageNumber,
+        pageSize,
+        fromDate,
+        toDate,
+      },
+    });
   });
 };
 

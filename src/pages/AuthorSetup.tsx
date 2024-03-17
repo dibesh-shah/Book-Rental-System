@@ -10,9 +10,8 @@ import {
   Input,
 } from "antd";
 import type { TableProps } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined } from "@ant-design/icons";
 
-import { AuthorData } from "../assets/static-data";
 import AuthorForm from "./AuthorForm";
 import {
   useDeleteAuthor,
@@ -34,14 +33,12 @@ const AuthorSetup: React.FC = () => {
   const [selectedAuthorData, setSelectedAuthorData] = useState(null);
   const [searchId, setSearchId] = useState(null);
   const [searchText, setSearchText] = useState(null);
-  // const [filteredData, setFilteredData] = useState([]);
   const [filteredData, setFilteredData] = useState<AuthorDataType | any>(null);
-  const [fetchedAuthorDataById, setFetchedAuthorDataById] = useState<
-    AuthorDataType | any
-  >(null);
+  const [fetchedAuthorDataById, setFetchedAuthorDataById] = useState<AuthorDataType | any>(null);
   const [openModal, setOpenModal] = useState(false);
   const [deleteId, setDeleteId] = useState(Number);
   const [modalTitle, setModalTitle] = useState(String);
+  const [page, setPage] = useState(1);
 
   const {
     data: authors,
@@ -60,7 +57,6 @@ const AuthorSetup: React.FC = () => {
   const handleDownload = () => {
     downloadAuthor(undefined, {
       onSuccess: (data) => {
-        // message.success(`Deleted Author  Successfully`);
         const blob = new Blob([data], { type: "application/vnd.ms-excel" });
         console.log(data);
         const url = window.URL.createObjectURL(blob);
@@ -72,6 +68,9 @@ const AuthorSetup: React.FC = () => {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
+      },
     });
   };
 
@@ -82,7 +81,6 @@ const AuthorSetup: React.FC = () => {
   };
 
   const handleOk = () => {
-    // setConfirmLoading(isDeletingAuthor);
     console.log(isDeletingAuthor);
     console.log(deleteId);
     deleteAuthor(deleteId, {
@@ -93,6 +91,9 @@ const AuthorSetup: React.FC = () => {
         message.success(`Deleted Author  Successfully`);
         setOpenModal(false);
         authorRefetch();
+      },
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
       },
     });
   };
@@ -117,6 +118,10 @@ const AuthorSetup: React.FC = () => {
 
   const onFinish = (values: any) => {
     console.log(values.id);
+    if (isNaN(values.id) ){
+      message.error("Please enter a valid Author Id");
+      return false;
+    }
     authorById(values.id, {
       onSuccess: (data) => {
         setFilteredData(null);
@@ -125,17 +130,16 @@ const AuthorSetup: React.FC = () => {
         console.log(data);
         setFetchedAuthorDataById(data);
       },
-      onError: (error) => {
-        message.error(error.message);
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
       },
     });
   };
 
   const onChange = (event: any) => {
-    const inputValue = event.target.value;
+    const inputValue = event.target.value.toLowerCase();
 
     if (!inputValue) {
-      // setFetchedAuthorDataById(null);
       setSearchId(null);
       setSearchText(null);
       setFilteredData(null);
@@ -143,10 +147,10 @@ const AuthorSetup: React.FC = () => {
     } else {
       const filtered = authors.filter((record: AuthorDataType) => {
         return (
-          record.authorId.toString().includes(inputValue) ||
-          record.mobileNumber.includes(inputValue) ||
-          record.email.includes(inputValue) ||
-          record.name.includes(inputValue)
+          record.authorId?.toString().toLowerCase().includes(inputValue) ||
+          record.mobileNumber?.toLowerCase().includes(inputValue) ||
+          record.email?.toLowerCase().includes(inputValue) ||
+          record.name?.toLowerCase().includes(inputValue)
         );
       });
       setFilteredData(filtered);
@@ -158,19 +162,19 @@ const AuthorSetup: React.FC = () => {
   const handleUpdateAuthor = (updateAuthor: any) => {
     console.log(updateAuthor);
     if(searchText){
-      const jsonArray = [updateAuthor];
-      setFilteredData(jsonArray);
+      const authorArray = [updateAuthor];
+      setFilteredData(authorArray);
     }else{
       setFetchedAuthorDataById(updateAuthor);
     }
-  
   };
 
   const columns: TableProps<AuthorDataType>["columns"] = [
     {
-      title: "ID",
-      dataIndex: "authorId",
-      key: "authorId",
+      title: "SN",
+      dataIndex: "sn",
+      key: "sn",
+      render: (_, __, index) => (page - 1) * 7 + index + 1,
     },
     {
       title: "Name",
@@ -208,7 +212,6 @@ const AuthorSetup: React.FC = () => {
             danger
             icon={<DeleteOutlined />}
             onClick={() => showModal(_record.authorId)}
-            // onClick={()=>console.log(_record)}
           >
             Delete
           </Button>
@@ -242,11 +245,10 @@ const AuthorSetup: React.FC = () => {
           <Form.Item
             name="id"
             rules={[
-              { required: true, message: "Please enter Author Id!" },
-              // { type: "number", message: "Please Enter valid Id" },
+              { required: true, message: "Please enter Author Details!" },
             ]}
           >
-            <Input placeholder="Enter Author Id" onChange={onChange} />
+            <Input placeholder="Enter Author Details" onChange={onChange} />
           </Form.Item>
 
           <Form.Item>
@@ -261,9 +263,15 @@ const AuthorSetup: React.FC = () => {
           </Form.Item>
         </Form>
 
-        <Button loading={downloadLoading} onClick={handleDownload}>
-          Download Excel
-        </Button>
+        <div>
+          <Button loading={downloadLoading} onClick={handleDownload} icon={<DownloadOutlined />} className="mr-4">
+            Download Excel
+          </Button>
+
+          <Button  icon={<UploadOutlined />}>
+            Upload Excel
+          </Button>
+        </div>
       </div>
 
       <Drawer
@@ -286,7 +294,13 @@ const AuthorSetup: React.FC = () => {
         loading={authorLoading}
         bordered
         rowKey={(record) => record.authorId}
-        pagination={{ pageSize: 7 }}
+        pagination={{
+          pageSize: 7,
+          responsive: true,
+          onChange(current) {
+            setPage(current);
+          },
+        }}
       />
 
       <Modal

@@ -50,6 +50,9 @@ const MemberForm: React.FC<MemberFormProps> = ({
           onUpdateMember(payload);
           onReset();
         },
+        onError: (errorMessage: any) => {
+          message.error(`${errorMessage}`);
+        },
       });
     } else {
       addMember(payload, {
@@ -58,9 +61,11 @@ const MemberForm: React.FC<MemberFormProps> = ({
           message.success(`Added Member ${values.name} Successfully`);
           onReset();
         },
+        onError: (errorMessage: any) => {
+          message.error(`${errorMessage}`);
+        },
       });
     }
-
     console.log("Received values:", values);
   };
 
@@ -74,7 +79,6 @@ const MemberForm: React.FC<MemberFormProps> = ({
   };
 
   useEffect(() => {
-    // Use setFieldsValue to set initial values after the form is mounted
     if (initialData) {
       form.setFieldsValue(initialData);
     }
@@ -85,8 +89,7 @@ const MemberForm: React.FC<MemberFormProps> = ({
   }, [form, initialData]);
 
   const validatePhoneNumber = (_, value) => {
-    // Custom validation function for phone number
-    const phoneNumberRegex = /^[0-9]{10}$/;
+    const phoneNumberRegex =  /^98\d{8}$/;
     if (value && !phoneNumberRegex.test(value)) {
       return Promise.reject("Invalid phone number");
     }

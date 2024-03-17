@@ -10,9 +10,8 @@ import {
   Input,
 } from "antd";
 import type { TableProps } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined } from "@ant-design/icons";
 
-import { CategoryData } from "../assets/static-data";
 import CategoryForm from "./CategoryForm";
 import {
   useDeleteCategory,
@@ -32,17 +31,18 @@ const CategorySetup: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [selectedCategoryData, setSelectedCategoryData] = useState(null);
   const [searchId, setSearchId] = useState(null);
-  const [fetchedCategoryDataById, setFetchedCategoryDataById] = useState<
-    CategoryDataType | any
-  >(null);
+  const [fetchedCategoryDataById, setFetchedCategoryDataById] = useState<CategoryDataType | any>(null);
+  const [searchText, setSearchText] = useState(null);
+  const [filteredData, setFilteredData] = useState<CategoryDataType | any>(null);
   const [openModal, setOpenModal] = useState(false);
   const [deleteId, setDeleteId] = useState(Number);
   const [modalTitle, setModalTitle] = useState(String);
+  const [page, setPage] = useState(1);
+
 
   const {
     data: category,
     isLoading: categoryLoading,
-    error,
     refetch: categoryRefetch,
   } = useFetchCategory();
   const { mutate: downloadCategory, isLoading: downloadLoading } =
@@ -55,7 +55,7 @@ const CategorySetup: React.FC = () => {
   const [form] = Form.useForm();
 
   const handleDownload = () => {
-    downloadCategory("", {
+    downloadCategory(undefined, {
       onSuccess: (data) => {
         const blob = new Blob([data], { type: "application/vnd.ms-excel" });
         console.log(data);
@@ -68,6 +68,9 @@ const CategorySetup: React.FC = () => {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
+      },
     });
   };
 
@@ -78,7 +81,6 @@ const CategorySetup: React.FC = () => {
   };
 
   const handleOk = () => {
-    // setConfirmLoading(isDeletingAuthor);
     console.log(isDeletingCategory);
     console.log(deleteId);
     deleteCategory(deleteId, {
@@ -88,6 +90,9 @@ const CategorySetup: React.FC = () => {
         setOpenModal(false);
         categoryRefetch();
         setSearchId(null);
+      },
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
       },
     });
   };
@@ -112,35 +117,62 @@ const CategorySetup: React.FC = () => {
 
   const onFinish = (values: any) => {
     console.log(values.id);
+    if (isNaN(values.id) ){
+      message.error("Please enter a valid Category Id");
+      return false;
+    }
     categoryById(values.id, {
       onSuccess: (data) => {
-        console.log(data);
+        setFilteredData(null);
+        setSearchText(null);
         setSearchId(values.id);
+        console.log(data);
         setFetchedCategoryDataById(data);
       },
-      onError: (error) => {
-        message.error(error.message);
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
       },
     });
   };
 
-  const onChange = (events: any) => {
-    if (!events.target.value) {
-      setFetchedCategoryDataById(null);
+  const onChange = (event: any) => {
+    
+    const inputValue = event.target.value.toLowerCase();;
+
+    if (!inputValue) {
       setSearchId(null);
+      setSearchText(null);
+      setFilteredData(null);
       categoryRefetch();
+    } else {
+      const filtered = category.filter((record:any) => {
+        return (
+          record.id?.toString().toLowerCase().includes(inputValue) ||
+          record.discription?.toLowerCase().includes(inputValue) ||
+          record.name?.toLowerCase().includes(inputValue)
+        );
+      });
+      setFilteredData(filtered);
+      setSearchText(inputValue);
+      setSearchId(null);
     }
   };
 
   const handleUpdateCategory = (updateCategory: any) => {
     setFetchedCategoryDataById(updateCategory);
+    if(searchText){
+      const categoryArray = [updateCategory];
+      setFilteredData(categoryArray);
+    }else{
+      setFetchedCategoryDataById(updateCategory);    }
   };
 
   const columns: TableProps<CategoryDataType>["columns"] = [
     {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
+      title: "SN",
+      dataIndex: "sn",
+      key: "sn",
+      render: (_, __, index) => (page - 1) * 7 + index + 1,
     },
     {
       title: "Name",
@@ -187,7 +219,6 @@ const CategorySetup: React.FC = () => {
           <h2 className="text-lg font-semibold">Category Setup</h2>
         </div>
 
-        {/* <button className="bg-blue-500 text-white px-4 py-2 rounded-md" onClick={showDrawer}> Create </button> */}
         <Button
           type="primary"
           className="bg-blue-600 text-white"
@@ -206,13 +237,11 @@ const CategorySetup: React.FC = () => {
           <Form.Item
             name="id"
             rules={[
-              { required: true, message: "Please enter Category Id!" },
-              // { type: "number", message: "Please Enter valid Id" },
+              { required: true, message: "Please enter Category Details!" },
             ]}
           >
             <Input
-              placeholder="Enter Category Id"
-              type="number"
+              placeholder="Enter Category Details"
               onChange={onChange}
             />
           </Form.Item>
@@ -229,9 +258,15 @@ const CategorySetup: React.FC = () => {
           </Form.Item>
         </Form>
 
-        <Button loading={downloadLoading} onClick={handleDownload}>
-          Download Excel
-        </Button>
+        <div>
+          <Button loading={downloadLoading} onClick={handleDownload} icon={<DownloadOutlined />} className="mr-4">
+            Download Excel
+          </Button>
+
+          <Button  icon={<UploadOutlined />}>
+            Upload Excel
+          </Button>
+        </div>
       </div>
 
       <Drawer
@@ -250,11 +285,17 @@ const CategorySetup: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={searchId ? [fetchedCategoryDataById] : category}
+        dataSource={searchId? [fetchedCategoryDataById] : searchText ? filteredData : category }
         bordered
         loading={categoryLoading}
         rowKey={(record) => record.id}
-        pagination={{ pageSize: 7 }}
+        pagination={{
+          pageSize: 7,
+          responsive: true,
+          onChange(current) {
+            setPage(current);
+          },
+        }}
       />
 
       <Modal

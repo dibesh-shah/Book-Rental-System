@@ -10,9 +10,8 @@ import {
   Input,
 } from "antd";
 import type { TableProps } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, DownloadOutlined ,UploadOutlined} from "@ant-design/icons";
 
-import { MemberData } from "../assets/static-data";
 import MemberForm from "./MemberForm";
 import {
   useDeleteMember,
@@ -34,17 +33,17 @@ const MemberSetup: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [selectedMemberData, setSelectedMemberData] = useState(null);
   const [searchId, setSearchId] = useState(null);
-  const [fetchedMemberDataById, setFetchedMemberDataById] = useState<
-    MemberDataType | any
-  >(null);
+  const [fetchedMemberDataById, setFetchedMemberDataById] = useState<MemberDataType | any>(null);
+  const [searchText, setSearchText] = useState(null);
+  const [filteredData, setFilteredData] = useState<MemberDataType | any>(null);
   const [openModal, setOpenModal] = useState(false);
   const [deleteId, setDeleteId] = useState(Number);
   const [modalTitle, setModalTitle] = useState(String);
+  const [page, setPage] = useState(1);
 
   const {
     data: members,
     isLoading: memberLoading,
-    error,
     refetch: memberRefetch,
   } = useFetchMember();
   const { mutate: downloadMember, isLoading: downloadLoading } =
@@ -57,7 +56,7 @@ const MemberSetup: React.FC = () => {
   const [form] = Form.useForm();
 
   const handleDownload = () => {
-    downloadMember("", {
+    downloadMember(undefined, {
       onSuccess: (data) => {
         const blob = new Blob([data], { type: "application/vnd.ms-excel" });
         console.log(data);
@@ -70,6 +69,9 @@ const MemberSetup: React.FC = () => {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
+      },
     });
   };
 
@@ -80,7 +82,6 @@ const MemberSetup: React.FC = () => {
   };
 
   const handleOk = () => {
-    // setConfirmLoading(isDeletingAuthor);
     console.log(isDeletingMember);
     console.log(deleteId);
     deleteMember(deleteId, {
@@ -90,6 +91,9 @@ const MemberSetup: React.FC = () => {
         memberRefetch();
         message.success(`Deleted Member  Successfully`);
         setSearchId(null);
+      },
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
       },
     });
   };
@@ -110,40 +114,70 @@ const MemberSetup: React.FC = () => {
     setEditMode(false);
     setSelectedMemberData(null);
     memberRefetch();
-    // console.log('closed')
   };
 
   const onFinish = (values: any) => {
     console.log(values.id);
+    if (isNaN(values.id) ){
+      message.error("Please enter a valid Member Id");
+      return false;
+    }
     memberById(values.id, {
       onSuccess: (data) => {
-        console.log(data);
+        setFilteredData(null);
+        setSearchText(null);
         setSearchId(values.id);
+        console.log(data);
         setFetchedMemberDataById(data);
       },
-      onError: (error) => {
-        message.error(error.message);
+      onError: (errorMessage: any) => {
+        message.error(`${errorMessage}`);
       },
     });
   };
 
-  const onChange = (events: any) => {
-    if (!events.target.value) {
-      setFetchedMemberDataById(null);
+  const onChange = (event: any) => {
+   
+    const inputValue = event.target.value.toLowerCase();
+
+    if (!inputValue) {
       setSearchId(null);
+      setSearchText(null);
+      setFilteredData(null);
       memberRefetch();
+    } else {
+      const filtered = members.filter((record:any) => {
+        return (
+          record.memberid?.toString().toLowerCase().includes(inputValue) ||
+          record.mobileNo?.toLowerCase().includes(inputValue) ||
+          record.email?.toLowerCase().includes(inputValue) ||
+          record.address?.toLowerCase().includes(inputValue) ||
+          record.name?.toLowerCase().includes(inputValue)
+        );
+      });
+      setFilteredData(filtered);
+      setSearchText(inputValue);
+      setSearchId(null);
     }
+
   };
 
   const handleUpdateMember = (updateMember: any) => {
     setFetchedMemberDataById(updateMember);
+    if(searchText){
+      const memberArray = [updateMember];
+      setFilteredData(memberArray);
+    }else{
+      setFetchedMemberDataById(updateMember);
+    }
   };
 
   const columns: TableProps<MemberDataType>["columns"] = [
     {
-      title: "ID",
-      dataIndex: "memberid",
-      key: "memberid",
+      title: "SN",
+      dataIndex: "sn",
+      key: "sn",
+      render: (_, __, index) => (page - 1) * 7 + index + 1,
     },
     {
       title: "Name",
@@ -217,13 +251,11 @@ const MemberSetup: React.FC = () => {
           <Form.Item
             name="id"
             rules={[
-              { required: true, message: "Please enter Member Id!" },
-              // { type: "number", message: "Please Enter valid Id" },
+              { required: true, message: "Please enter Member Details!" },
             ]}
           >
             <Input
-              placeholder="Enter Member Id"
-              type="number"
+              placeholder="Enter Member Details"
               onChange={onChange}
             />
           </Form.Item>
@@ -239,10 +271,17 @@ const MemberSetup: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
+        
+        <div>
+          <Button loading={downloadLoading} onClick={handleDownload} icon={<DownloadOutlined />} className="mr-4">
+            Download Excel
+          </Button>
 
-        <Button loading={downloadLoading} onClick={handleDownload}>
-          Download Excel
-        </Button>
+          <Button  icon={<UploadOutlined />}>
+            Upload Excel
+          </Button>
+        </div>
+        
       </div>
 
       <Drawer
@@ -261,11 +300,17 @@ const MemberSetup: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={searchId ? [fetchedMemberDataById] : members}
+        dataSource={searchId? [fetchedMemberDataById] : searchText ? filteredData : members }
         bordered
         loading={memberLoading}
         rowKey={(record) => record.memberid}
-        pagination={{ pageSize: 7 }}
+        pagination={{
+          pageSize: 7,
+          responsive: true,
+          onChange(current) {
+            setPage(current);
+          },
+        }}
       />
 
       <Modal

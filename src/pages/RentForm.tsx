@@ -1,6 +1,7 @@
 import { Form, Input, Button, message, Select, InputNumber } from "antd";
-import { useEffect } from "react";
-import { BookData, MemberData } from "../assets/static-data";
+import { useEffect, useState } from "react";
+import dayjs from "dayjs";
+
 import {
   useAddTransaction,
   useUpdateTransaction,
@@ -35,27 +36,28 @@ const RentForm: React.FC<RentFormProps> = ({
   const { data: members } = useFetchMember();
   const { data: books } = useFetchBook();
 
-  let bookArray =[];
-  let memberArray =[];
+  let bookArray = [];
+  let memberArray = [];
 
-  if(initialData){
+  if (initialData) {
     const { bookName, memberName } = initialData;
-    bookArray = bookName ? bookName.split(', ') : [];
-    memberArray = memberName ? memberName.split(', ') : [];
+    bookArray = bookName ? bookName.split(", ") : [];
+    memberArray = memberName ? memberName.split(", ") : [];
   }
 
   const onFinish = (values: any) => {
     let payload: any = {
       bookId: values.bookId,
-      code: values.code,
       fromDate: values.fromDate,
       toDate: values.toDate,
-      rentType: values.rentType,
+      rentType: "RENT",
       Fk_member_id: values.Fk_member_id,
     };
 
     if (initialData) {
-      payload = { ...payload, id: initialData.id };
+      // payload = { ...payload, id: initialData.id };
+      const { bookId, Fk_member_id, ...rest } = payload;
+      payload = { ...rest, id: initialData.id };
 
       editTransaction(payload, {
         onSuccess: () => {
@@ -64,6 +66,9 @@ const RentForm: React.FC<RentFormProps> = ({
           onUpdateTransaction(payload);
           onReset();
         },
+        onError: (errorMessage: any) => {
+          message.error(`Failed : ${errorMessage}`);
+        },
       });
     } else {
       addTransaction(payload, {
@@ -71,6 +76,9 @@ const RentForm: React.FC<RentFormProps> = ({
           onSuccess();
           message.success(`Added Transaction Successfully`);
           onReset();
+        },
+        onError: (errorMessage: any) => {
+          message.error(`Failed : ${errorMessage}`);
         },
       });
     }
@@ -106,25 +114,39 @@ const RentForm: React.FC<RentFormProps> = ({
     };
   }, [form, initialData]);
 
+  const calculateToDate = (value: any) => {
+    if (value === null) {
+      form.setFieldsValue({ toDate: null });
+    }
+    const fromDate = new Date();
+    form.setFieldsValue({ fromDate: fromDate.toISOString().split("T")[0] });
+    if (fromDate && value) {
+      const toDate = new Date();
+      toDate.setDate(toDate.getDate() + parseInt(value));
+      form.setFieldsValue({ toDate: toDate.toISOString().split("T")[0] });
+    }
+  };
+
   return (
     <Form
       form={form}
       name="rentForm"
       onFinish={onFinish}
       onFinishFailed={onFinishFailed}
-      labelCol={{ span: 3, offset: 0 }}
+      labelCol={{ span: 4, offset: 0 }}
       wrapperCol={{ span: 20 }}
-      // initialValues={{
-      //   bookId: bookArray,
-      //   Fk_member_id: memberArray,
-      // }}
+      initialValues={{
+        bookId: bookArray,
+        Fk_member_id: memberArray,
+      }}
     >
       <Form.Item
         label="Book"
         name="bookId"
+        // name={editMode?"":"bookId"}
         rules={[{ required: true, message: "Please select a book!" }]}
       >
-        <Select placeholder="Select a book" >
+        <Select placeholder="Select a book" disabled={editMode ? true : false}>
           {books?.map((book) => (
             <Option key={book.id} value={book.id}>
               {book.name}
@@ -136,15 +158,28 @@ const RentForm: React.FC<RentFormProps> = ({
       <Form.Item
         label="Member"
         name="Fk_member_id"
+        // name={editMode?"":"Fk_member_id"}
         rules={[{ required: true, message: "Please select a member!" }]}
       >
-        <Select placeholder="Select a member" >
+        <Select
+          placeholder="Select a member"
+          disabled={editMode ? true : false}
+        >
           {members?.map((member) => (
             <Option key={member.memberid} value={member.memberid}>
               {member.name}
             </Option>
           ))}
         </Select>
+      </Form.Item>
+
+      <Form.Item
+        label="No. of Days"
+        name="numberOfDays"
+        hidden={editMode ? true : false}
+        // rules={[{ required: true, message: "Please enter no. of Days!" }]}
+      >
+        <InputNumber className="w-full" min={0} onChange={calculateToDate} />
       </Form.Item>
 
       <Form.Item
@@ -159,7 +194,7 @@ const RentForm: React.FC<RentFormProps> = ({
       </Form.Item>
 
       <Form.Item
-        label="To Date"
+        label="Return Date"
         name="toDate"
         rules={[{ required: true, message: "Please select to date" }]}
       >
@@ -169,52 +204,31 @@ const RentForm: React.FC<RentFormProps> = ({
         />
       </Form.Item>
 
-      <Form.Item
-        label="Code"
-        name="code"
-        rules={[{ required: true, message: "Please enter the code!" }]}
-      >
-        <Input placeholder="Transcation Code" />
-      </Form.Item>
-
-      <Form.Item
-        label="Status"
-        name="rentType"
-        rules={[{ required: true, message: "Plese Select Status" }]}
-      >
-        <Select
-          options={[
-            { value: "RENT", label: <span>Rent</span> },
-            { value: "RETURN", label: <span>Return</span> },
-          ]}
-        />
-      </Form.Item>
-
       <div className="flex justify-end">
-          <Form.Item>
+        <Form.Item>
+          <Button
+            type="primary"
+            className="bg-blue-600"
+            htmlType="submit"
+            loading={editMode ? isEditingTransaction : isAddingTransaction}
+          >
+            {editMode ? "Update" : "Save"}
+          </Button>
+        </Form.Item>
+
+        <Form.Item>
+          {!editMode && (
             <Button
               type="primary"
-              className="bg-blue-600"
-              htmlType="submit"
-              loading={editMode ? isEditingTransaction : isAddingTransaction}
+              className="bg-green-600 ml-4"
+              htmlType="button"
+              onClick={onReset}
             >
-              {editMode ? "Update" : "Save"}
+              Reset
             </Button>
-          </Form.Item>
-
-          <Form.Item>
-            {!editMode && (
-              <Button
-                type="primary"
-                className="bg-green-600 ml-4"
-                htmlType="button"
-                onClick={onReset}
-              >
-                Reset
-              </Button>
-            )}
-          </Form.Item>
-        </div>
+          )}
+        </Form.Item>
+      </div>
     </Form>
   );
 };

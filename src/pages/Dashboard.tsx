@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Content } from "antd/es/layout/layout";
 
 import { Link, Navigate, Route, Routes } from "react-router-dom";
-import { Breadcrumb, Layout, Menu, theme } from "antd";
+import { Breadcrumb, Card, Col, Layout, Menu, Row, Spin, theme } from "antd";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import AuthorSetup from "./AuthorSetup";
@@ -16,7 +16,10 @@ import About from "./About";
 import ManageUser from "./ManageUser";
 import History from "./History";
 import ChangePassword from "./ChangePassword";
-
+import { useFetchAuthor } from "../api/author/queries";
+import { useFetchCategory } from "../api/category/queries";
+import { useFetchMember } from "../api/member/queries";
+import { useFetchBook } from "../api/book/queries";
 
 const Dashboard: React.FC = () => {
   const { loggedIn, logout } = useAuth();
@@ -59,11 +62,88 @@ const Dashboard: React.FC = () => {
     }
   }, []);
 
-
-  //   const [collapsed, setCollapsed] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  const { data: authors } = useFetchAuthor();
+  const { data: category } = useFetchCategory();
+  const { data: members } = useFetchMember();
+  const { data: books, isLoading: loading } = useFetchBook();
+
+  const authorCount = authors?.length || 0;
+  const bookCount = books?.length || 0;
+  const memberCount = members?.length || 0;
+  const categoryCount = category?.length || 0;
+
+  const CustomCard = ({ title, count, backgroundColor, textColor }) => {
+    return (
+      <Card
+        style={{ height: "200px", textAlign: "center", backgroundColor }}
+        bodyStyle={{
+          padding: "24px 16px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
+      >
+        <div>
+          <h1 style={{ color: textColor, fontSize: "20px" }}>{title}</h1>
+          <p style={{ fontSize: "60px", fontWeight: "bold", color: textColor }}>
+            {count}
+          </p>
+        </div>
+      </Card>
+    );
+  };
+
+  const DashboardContent = () => {
+    return (
+      <div style={{ padding: "20px" }}>
+        {loading ? (
+          <div style={{ textAlign: "center" }}>
+            <Spin size="large" />
+            <p>Loading...</p>
+          </div>
+        ) : (
+          <Row gutter={[16, 16]}>
+            <Col span={6}>
+              <CustomCard
+                title="Authors"
+                count={authorCount}
+                backgroundColor="#ffecb3"
+                textColor="black"
+              />
+            </Col>
+            <Col span={6}>
+              <CustomCard
+                title="Books"
+                count={bookCount}
+                backgroundColor="#b2dfdb"
+                textColor="black"
+              />
+            </Col>
+            <Col span={6}>
+              <CustomCard
+                title="Members"
+                count={memberCount}
+                backgroundColor="#ffcc80"
+                textColor="black"
+              />
+            </Col>
+            <Col span={6}>
+              <CustomCard
+                title="Categories"
+                count={categoryCount}
+                backgroundColor="#f8bbd0"
+                textColor="black"
+              />
+            </Col>
+          </Row>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -90,7 +170,6 @@ const Dashboard: React.FC = () => {
                   <Navigate to={loggedIn ? "/dashboard" : "/login"} replace />
                 }
               />
-
               <Route path="author-setup" element={<AuthorSetup />} />
               <Route path="category-setup" element={<CategorySetup />} />
               <Route path="member-setup" element={<MemberSetup />} />
@@ -111,6 +190,7 @@ const Dashboard: React.FC = () => {
                 }
               />
             </Routes>
+            {location.pathname === "/dashboard" && <DashboardContent />}
           </div>
         </Content>
       </Layout>

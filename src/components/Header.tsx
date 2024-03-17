@@ -23,7 +23,7 @@ const Head: React.FC = () => {
 
   return (
     <div className="flex justify-between items-center p-4 bg-white ">
-      <span className="text-xl font-bold text-black">Book Rental System</span>
+      <span className="text-xl font-bold text-black"></span>
       <Dropdown
         menu={{ items }}
         placement="bottomRight"

@@ -39,6 +39,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           onUpdateCategory(payload);
           onReset();
         },
+        onError: (errorMessage: any) => {
+          message.error(`${errorMessage}`);
+        },
       });
     } else {
       addCategory(payload, {
@@ -46,6 +49,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
           onSuccess();
           message.success(`Added Category ${values.name} Successfully`);
           onReset();
+        },
+        onError: (errorMessage: any) => {
+          message.error(`${errorMessage}`);
         },
       });
     }
@@ -63,7 +69,6 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   };
 
   useEffect(() => {
-    // Use setFieldsValue to set initial values after the form is mounted
     if (initialData) {
       form.setFieldsValue(initialData);
     }

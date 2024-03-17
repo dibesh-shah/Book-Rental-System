@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { message } from "antd";
 
 interface AuthContextProps {
   loggedIn: boolean;
@@ -45,16 +46,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
       if (responseData) {
         const token = responseData.data;
-        console.log(token)
+        console.log(token);
         localStorage.setItem("bookRental", token.accessToken);
         localStorage.setItem("refreshToken", token.refreshToken);
         setLoggedIn(true);
       } else {
         console.error("Login failed:", responseData.message);
       }
-    console.log(responseData)
+      console.log(responseData);
     } catch (error) {
       console.error("Login failed", error);
+      message.error(`Failed : ${error.response.data.data.errorMessage}`);
     }
   };
 
