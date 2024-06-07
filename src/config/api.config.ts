@@ -1,1 +1,1 @@
-export const BASE_API_ENDPOINT = `https://bookrental-7yd6.onrender.com`
+export const BASE_API_ENDPOINT = `https://book-rental-backend-9vf9.onrender.com`
