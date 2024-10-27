@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Form, Input, Button, Typography } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useAuth } from "../contextProvider/AuthContext";
+// import background from "../assets/background.jpg"
 
 const { Title } = Typography;
 
@@ -31,7 +32,7 @@ const Login: React.FC = () => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        backgroundImage: `url(../../public/background.jpg)`,
+        backgroundImage: `url("/background.jpg")`,
         backgroundSize: 'contain',
         backgroundPosition: 'center',
       }}

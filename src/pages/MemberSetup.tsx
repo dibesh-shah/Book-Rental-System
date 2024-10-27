@@ -132,6 +132,7 @@ const MemberSetup: React.FC = () => {
         message.success("Sucessfully uploaded");
         setOpenUploadModal(false);
         memberRefetch();
+        setFileList([]);
       },
       onError: (data) => {
         message.error(`Failed ${data}`);

@@ -132,6 +132,7 @@ const CategorySetup: React.FC = () => {
         message.success("Sucessfully uploaded");
         setOpenUploadModal(false);
         categoryRefetch();
+        setFileList([]);
       },
       onError: (data) => {
         message.error(`Failed ${data}`);

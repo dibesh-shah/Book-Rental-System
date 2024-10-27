@@ -136,6 +136,7 @@ const RentBook: React.FC = () => {
         message.success("Sucessfully uploaded");
         setOpenUploadModal(false);
         refetchTransaction();
+        setFileList([]);
       },
       onError: (data) => {
         message.error(`Failed ${data}`);

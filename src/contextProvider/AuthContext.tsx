@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const login = async (username: string, password: string) => {
     try {
       const response = await axios.post(
-        "https://bookrental-7yd6.onrender.com/admin/user/login",
+        "https://book-rental-backend-9vf9.onrender.com/admin/user/login",
         {
           username,
           password,

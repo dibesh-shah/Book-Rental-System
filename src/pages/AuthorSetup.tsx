@@ -126,11 +126,13 @@ const AuthorSetup: React.FC = () => {
     let payload = {
       file: e.file.file,
     };
+
     uploadAuthor(payload, {
       onSuccess: () => {
         message.success("Sucessfully uploaded");
         setOpenUploadModal(false);
         authorRefetch();
+        setFileList([]);
       },
       onError: (data) => {
         message.error(`Failed ${data}`);
@@ -414,7 +416,7 @@ const AuthorSetup: React.FC = () => {
               </p>
             </Dragger>
           </Form.Item>
-          <Form.Item className="flex justify-center">
+          <Form.Item className="flex justify-center mb-0">
             <Button
               className="bg-blue-600 text-white "
               type="default"
